@@ -1057,7 +1057,8 @@ __pragma__ ('endif')
                 }
             });
         });},
-        enumerable: true
+        enumerable: true,
+        configurable: true
     });
 
     String.prototype.isnumeric = function () {
@@ -1309,7 +1310,7 @@ __pragma__ ('endif')
     }
 
     // Python classes, methods and functions are all translated to JavaScript functions
-    Object.defineProperty (Function.prototype, '__setdoc__', {value: __setdoc__, enumerable: false});
+    Object.defineProperty (Function.prototype, '__setdoc__', {value: __setdoc__, enumerable: false, configurable: true});
 
     // General operator overloading, only the ones that make most sense in matrix and complex operations
 
