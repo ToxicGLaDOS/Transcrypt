@@ -198,46 +198,16 @@ class complex:
 __pragma__ ('endif')
 
 class __Terminal__:
-    '''
-    Printing to either the console or to html happens async, but is blocked by calling window.prompt.
-    So while all input and print statements are encountered in normal order, the print's exit immediately without yet having actually printed
-    This means the next input takes control, blocking actual printing and so on indefinitely
-    The effect is that everything's only printed after all inputs are done
-    To prevent that, what's needed is to only execute the next window.prompt after actual printing has been done
-    Since we've no way to find out when that is, a timeout is used.
-    '''
-
     def __init__ (self):
-        self.buffer = ''
-    
-        try:
-            self.element = document.getElementById ('__terminal__')
-        except:
-            self.element = None
-            
-        if self.element:
-            self.element.style.overflowX = 'auto'
-            self.element.style.boxSizing = 'border-box'
-            self.element.style.padding = '5px'
-            self.element.innerHTML = '_'
-        
-    __pragma__ ('kwargs')
-        
-    def print (self, *args, sep = ' ', end = '\n'):
-        self.buffer = '{}{}{}'.format (self.buffer, sep.join ([str (arg) for arg in args]), end) [-4096 : ] 
-        
-        if self.element:
-            self.element.innerHTML = self.buffer.replace ('\n', '<br>')
-            self.element.scrollTop = self.element.scrollHeight
+        pass
+
+    def print (self, *args, sep = ' '):
+        length = len (args)
+        if length < 1:
+            console.log ()
+        elif length == 1:
+            console.log (args[0])
         else:
-            console.log (sep.join ([str (arg) for arg in args]))
-        
-    def input (self, question):
-        self.print ('{}'.format (question), end = '')
-        answer = window.prompt ('\n'.join (self.buffer.split ('\n') [-16:]))
-        self.print (answer)
-        return answer
-        
-    __pragma__ ('nokwargs')
-    
+            console.log (sep.join ([str(arg) for arg in args]))
+
 __terminal__ = __Terminal__ ()
