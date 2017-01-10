@@ -1049,11 +1049,7 @@ __pragma__ ('endif')
     // List extensions to Array
 
     function list (iterable) {                                      // All such creators should be callable without new
-__pragma__ ('ifdef', '__esv6__')
         var instance = iterable ? Array.from (iterable) : [];
-__pragma__ ('else')
-        var instance = iterable ? [] .slice.apply (iterable) : [];  // Spread iterable, n.b. array.slice (), so array before dot
-__pragma__ ('endif')
         // Sort is the normal JavaScript sort, Python sort is a non-member function
         return instance;
     }
@@ -1077,6 +1073,10 @@ __pragma__ ('endif')
         }
         else if (stop > this.length) {
             stop = this.length;
+        }
+
+        if (step == 1) {
+            return Array.prototype.slice.apply(this, [start, stop])
         }
 
         var result = list ([]);
