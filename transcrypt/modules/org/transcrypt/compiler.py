@@ -888,7 +888,7 @@ class Generator (ast.NodeVisitor):
             # If there is a **kwargs arg, make a local to hold its calltime contents
             # This local is needed even if arguments.length == 0, it's just empty then but may be read or passed on
             if node.kwarg:
-                self.emit ('var {} = dict ();\n', self.filterId (node.kwarg.arg))
+                self.emit ('var {} = {{}};\n', self.filterId (node.kwarg.arg))
 
             self.emit ('if (arguments.length) {{\n')
             self.indent ()
@@ -1697,21 +1697,20 @@ class Generator (ast.NodeVisitor):
         if not self.allowJavaScriptKeys:                    # If we don't want JavaScript treatment of keys, for literal keys it doesn't make a difference
             for key in node.keys:
                 if not type (key) in (ast.Str, ast.Num):    # but if there's only one non-literal key there's a difference, and all keys are treated the Python way
-                    self.emit ('dict ([')
+                    self.emit ('{{')
                     for index, (key, value) in enumerate (zip (node.keys, node.values)):
                         self.emitComma (index)
                         self.emit ('[')
                         self.visit (key)                    # In a JavaScript list, name is evaluated as variable or function call to produce a key
-                        self.emit (', ')
+                        self.emit (']: ')
                         self.visit (value)
-                        self.emit (']')
-                    self.emit ('])')
+                    self.emit ('}}')
                     return
 
         if self.allowJavaScriptIter:
             self.emit ('{{')
         else:
-            self.emit ('dict ({{')                              # Since we didn't return, we want identifier keys to be treated as string literals
+            self.emit ('{{')                              # Since we didn't return, we want identifier keys to be treated as string literals
         for index, (key, value) in enumerate (zip (node.keys, node.values)):
             self.emitComma (index)
             self.idFiltering = False                        # The key may be a string or an identifier, the latter normally would be filtered, which we don't want
@@ -1723,7 +1722,7 @@ class Generator (ast.NodeVisitor):
         if self.allowJavaScriptIter:
             self.emit ('}}')
         else:
-            self.emit ('}})')
+            self.emit ('}}')
 
     def visit_DictComp (self, node):
         self.visit_ListComp (node, isDict = True)
@@ -2142,11 +2141,11 @@ class Generator (ast.NodeVisitor):
         self.emit (';\n}})')
 
     def visit_List (self, node):
-        self.emit ('list ([')
+        self.emit ('[')
         for index, elt in enumerate (node.elts):
             self.emitComma (index)
             self.visit (elt)
-        self.emit ('])')
+        self.emit (']')
 
     def visit_ListComp (self, node, isSet = False, isDict = False, isGenExp = False):
         elts = []
@@ -2385,7 +2384,7 @@ class Generator (ast.NodeVisitor):
         self.visit_ListComp (node, isSet = True)
 
     def visit_Slice (self, node):   # Only visited for dims as part of ExtSlice
-        self.emit ('tuple ([')
+        self.emit ('[')
 
         if node.lower == None:
             self.emit ('0')
@@ -2535,8 +2534,8 @@ class Generator (ast.NodeVisitor):
         keepTuple = not (self.stripTuple or self.stripTuples)       # Tuples used as indices are stripped for speed
         self.stripTuple = False             # Tuples used as indices are stripped for speed, only strip first tuple encountered
                                             # Tuples used as assignment target in a JavaScript 6 for-loop are stripped for correctness, not only first
-        if keepTuple:
-            self.emit ('tuple (')
+        # if keepTuple:
+        #     self.emit ('tuple (')
 
         self.emit ('[')
         for index, elt in enumerate (node.elts):
@@ -2545,8 +2544,8 @@ class Generator (ast.NodeVisitor):
 
         self.emit (']')
 
-        if keepTuple:
-            self.emit (')')
+        # if keepTuple:
+        #     self.emit (')')
 
     def visit_UnaryOp (self, node):
         if self.allowOperatorOverloading and type (node.op) == ast.USub:
