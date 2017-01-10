@@ -325,19 +325,16 @@ __pragma__ ('endif')
 
     // Repr function uses __repr__ method, then __str__, then toString
     var repr = function (anObject) {
-        try {
+        if (anObject == null) {
+            return 'None';
+        } else if (anObject.__repr__) {
             return anObject.__repr__ ();
+        } else if (anObject.__str__) {
+            return anObject.__str__ ();
         }
-        catch (exception) {
-            try {
-                return anObject.__str__ ();
-            }
-            catch (exception) { // anObject has no __repr__ and no __str__
+            else { // anObject has no __repr__ and no __str__
                 try {
-                    if (anObject == null) {
-                        return 'None';
-                    }
-                    else if (anObject.constructor == Object) {
+                    if (anObject.constructor == Object) {
                         var result = '{';
                         var comma = false;
                         for (var attrib in anObject) {
@@ -371,7 +368,6 @@ __pragma__ ('endif')
                     return '???';
                 }
             }
-        }
     };
     __all__.repr = repr;
 
