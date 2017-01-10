@@ -4,7 +4,6 @@
             __all__: {
                 __inited__: false,
                 __init__: function (__all__) {
-__pragma__ ('ifdef', '__esv6__')
                     var count = function* (start, step) {
                         if (start == undefined) {
                             start = 0;
@@ -298,18 +297,7 @@ __pragma__ ('ifdef', '__esv6__')
                         recurse (tail, tail.slice (0, 0), r - 1);
                         return list (result);
                     }
-__pragma__ ('else')
-                    var chain = function () {
-                        var args = [] .slice.apply (arguments);
-                        var result = [];
-                        for (var index = 0; index < args.length; index++) {
-                            result = result.concat (args [index]);
-                        }
-                        return list (result);
-                    }
-__pragma__ ('endif')
                     //<all>
-__pragma__ ('ifdef', '__esv6__')
                     __all__.count = count;
                     __all__.cycle = cycle;
                     __all__.repeat = repeat;
@@ -327,9 +315,6 @@ __pragma__ ('ifdef', '__esv6__')
                     __all__.permutations = permutations;
                     __all__.combinations = combinations;
                     __all__.combinations_with_replacement = combinations_with_replacement;
-__pragma__ ('else')
-                    __all__.chain = chain;
-__pragma__ ('endif')
                     //</all>
                 }
             }
