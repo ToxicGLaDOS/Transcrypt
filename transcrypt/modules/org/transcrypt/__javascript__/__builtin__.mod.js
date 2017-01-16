@@ -249,8 +249,18 @@ __pragma__ ('endif')
     float.__name__ = 'float';
     __all__.float = float;
 
-    var int = function (any) {
-        return float (any) | 0
+    var int = function (any, radix) {
+        if (typeof any === 'number') {
+            return Math.floor(any);
+        }
+        var number = parseInt(any, radix);
+        if (isNaN (number)) {
+            if (radix == undefined) {
+                radix = 10;
+            }
+            throw ValueError('invalid literal for int() with base ' + radix + ': ' + any, new Error());
+        }
+        return number;
     };
     int.__name__ = 'int';
     __all__.int = int;
