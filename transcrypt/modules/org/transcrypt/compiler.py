@@ -546,7 +546,10 @@ class Generator (ast.NodeVisitor):
 
         self.tempIndices = {}
         self.skippedTemps = set ()
-        self.stubsName = 'org.{}.stubs.'.format (__base__.__envir__.transpiler_name)
+        self.stubsNames = [
+            'org.{}.stubs.'.format (__base__.__envir__.transpiler_name),
+            'typing'
+        ]
 
         self.nameConsts = {
             None: 'null',
@@ -2145,6 +2148,39 @@ class Generator (ast.NodeVisitor):
         # )
 
     def visit_If (self, node):
+        class Unknown(Exception):
+            pass
+
+        class ConstEvalVisitor (ast.NodeVisitor):
+            def __init__ (self):
+                self.values = []
+
+            def visit_UnaryOp (self, node):
+                self.visit (node.operand)
+                if node.op == ast.Not:
+                    self.values [-1] = not self.values [-1]
+
+            def visit_Expr (self, node):
+                self.visit (node.value)
+
+            def visit_Name (self, node):
+                if node.id == 'TYPE_CHECKING':
+                    self.values.append (False)
+                else:
+                    raise Unknown ()
+
+        test_evaluator = ConstEvalVisitor ()
+        try:
+            test_evaluator.visit (node.test)
+        except Unknown:
+            pass
+        else:
+            if len (test_evaluator.values) == 1:
+                if test_evaluator.values [0]:
+                    # skip the `if` if we know it to be compile-time true.
+                    self.emitBody (node.body)
+                return
+
         self.adaptLineNrString (node)
 
         self.emit ('if (')
@@ -2187,7 +2223,8 @@ class Generator (ast.NodeVisitor):
     def visit_Import (self, node):  # Import .. can only import modules
         self.adaptLineNrString (node)
 
-        names = [alias for alias in node.names if not alias.name.startswith (self.stubsName)]
+        names = [alias for alias in node.names if not any(alias.name.startswith(name)
+                                                          for name in self.stubsNames)]
 
         if not names:
             return
@@ -2218,7 +2255,7 @@ class Generator (ast.NodeVisitor):
     def visit_ImportFrom (self, node):  # From .. import can import modules or entities in modules
         self.adaptLineNrString (node)
 
-        if node.module.startswith (self.stubsName):
+        if any(node.module.startswith (name) for name in self.stubsNames):
             return
 
         try:
