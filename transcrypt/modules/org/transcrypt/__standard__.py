@@ -14,9 +14,11 @@ class Exception:
     __pragma__ ('kwargs')
     def __init__ (self, *args, **kwargs):
         self.__args__ = args
-        try:
+        if kwargs.error != None:
             self.stack = kwargs.error.stack # Integrate with JavaScript Error object
-        except:
+        elif Error:
+                self.stack = (__new__(Error())).stack
+        else:
             self.stack = 'No stack trace available'
     __pragma__ ('nokwargs')
         
