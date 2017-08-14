@@ -707,8 +707,14 @@ __pragma__ ('endif')
         // Sort is the normal JavaScript sort, Python sort is a non-member function
         return instance;
     }
+
+    // For some reason in Screeps, there's a second list prototype used for Memory and the result
+    // of lodash function. We can access it initially here using _.filter() to create a new 'lodash-y'
+    // list so we can fix that prototype as well as the regular Array prototype.
+    var second_list_prototype = _.filter([]).__proto__;
+
     __all__.list = list;
-    Array.prototype.__class__ = list;   // All arrays are lists (not only if constructed by the list ctor), unless constructed otherwise
+    second_list_prototype.__class__ = Array.prototype.__class__ = list;   // All arrays are lists (not only if constructed by the list ctor), unless constructed otherwise
     list.__name__ = 'list';
 
     /*
@@ -721,9 +727,9 @@ __pragma__ ('endif')
     }
     */
 
-    Array.prototype.__iter__ = function () {return new __PyIterator__ (this);};
+    second_list_prototype.__iter__ = Array.prototype.__iter__ = function () {return new __PyIterator__ (this);};
 
-    Array.prototype.__getslice__ = function (start, stop, step) {
+    second_list_prototype.__getslice__ = Array.prototype.__getslice__ = function (start, stop, step) {
         if (start < 0) {
             start = this.length + start;
         }
@@ -750,7 +756,7 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.__setslice__ = function (start, stop, step, source) {
+    second_list_prototype.__setslice__ = Array.prototype.__setslice__ = function (start, stop, step, source) {
         if (start < 0) {
             start = this.length + start;
         }
@@ -773,7 +779,7 @@ __pragma__ ('endif')
         }
     };
 
-    Array.prototype.__repr__ = function () {
+    second_list_prototype.__repr__ = Array.prototype.__repr__ = function () {
         if (this.__class__ == set && !this.length) {
             return 'set()';
         }
@@ -795,25 +801,25 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.__str__ = Array.prototype.__repr__;
+    second_list_prototype.__str__ = Array.prototype.__str__ = Array.prototype.__repr__;
 
-    Array.prototype.append = function (element) {
+    second_list_prototype.append = Array.prototype.append = function (element) {
         this.push (element);
     };
 
-    Array.prototype.clear = function () {
+    second_list_prototype.clear = Array.prototype.clear = function () {
         this.length = 0;
     };
 
-    Array.prototype.extend = function (aList) {
+    second_list_prototype.extend = Array.prototype.extend = function (aList) {
         this.push.apply (this, aList);
     };
 
-    Array.prototype.insert = function (index, element) {
+    second_list_prototype.insert = Array.prototype.insert = function (index, element) {
         this.splice (index, 0, element);
     };
 
-    Array.prototype.remove = function (element) {
+    second_list_prototype.remove = Array.prototype.remove = function (element) {
         var index = this.indexOf (element);
         if (index == -1) {
             throw ValueError (new Error ());
@@ -821,11 +827,11 @@ __pragma__ ('endif')
         this.splice (index, 1);
     };
 
-    Array.prototype.index = function (element) {
+    second_list_prototype.index = Array.prototype.index = function (element) {
         return this.indexOf (element);
     };
 
-    Array.prototype.py_pop = function (index) {
+    second_list_prototype.py_pop = Array.prototype.py_pop = function (index) {
         if (index == undefined) {
             return this.pop ();  // Remove last element
         }
@@ -834,18 +840,18 @@ __pragma__ ('endif')
         }
     };
 
-    Array.prototype.py_sort = function () {
+    second_list_prototype.py_sort = Array.prototype.py_sort = function () {
         __sort__.apply  (null, [this].concat ([] .slice.apply (arguments)));    // Can't work directly with arguments
         // Python params: (iterable, key = None, reverse = False)
         // py_sort is called with the Transcrypt kwargs mechanism, and just passes the params on to __sort__
         // __sort__ is def'ed with the Transcrypt kwargs mechanism
     };
 
-    Array.prototype.__add__ = function (aList) {
+    second_list_prototype.__add__ = Array.prototype.__add__ = function (aList) {
         return list (this.concat (aList));
     };
 
-    Array.prototype.__mul__ = function (scalar) {
+    second_list_prototype.__mul__ = Array.prototype.__mul__ = function (scalar) {
         var result = this;
         for (var i = 1; i < scalar; i++) {
             result = result.concat (this);
@@ -853,7 +859,7 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.__rmul__ = Array.prototype.__mul__;
+    second_list_prototype.__rmul__ = Array.prototype.__rmul__ = Array.prototype.__mul__;
 
     // Tuple extensions to Array
 
@@ -883,7 +889,7 @@ __pragma__ ('endif')
     __all__.set = set;
     set.__name__ = 'set';
 
-    Array.prototype.__bindexOf__ = function (element) { // Used to turn O (n^2) into O (n log n)
+    second_list_prototype.__bindexOf__ = Array.prototype.__bindexOf__ = function (element) { // Used to turn O (n^2) into O (n log n)
     // Since sorting is lex, compare has to be lex. This also allows for mixed lists
 
         element += '';
@@ -909,20 +915,20 @@ __pragma__ ('endif')
         return -1;
     };
 
-    Array.prototype.add = function (element) {
+    second_list_prototype.add = Array.prototype.add = function (element) {
         if (this.indexOf (element) == -1) { // Avoid duplicates in set
             this.push (element);
         }
     };
 
-    Array.prototype.discard = function (element) {
+    second_list_prototype.discard = Array.prototype.discard = function (element) {
         var index = this.indexOf (element);
         if (index != -1) {
             this.splice (index, 1);
         }
     };
 
-    Array.prototype.isdisjoint = function (other) {
+    second_list_prototype.isdisjoint = Array.prototype.isdisjoint = function (other) {
         this.sort ();
         for (var i = 0; i < other.length; i++) {
             if (this.__bindexOf__ (other [i]) != -1) {
@@ -932,7 +938,7 @@ __pragma__ ('endif')
         return true;
     };
 
-    Array.prototype.issuperset = function (other) {
+    second_list_prototype.issuperset = Array.prototype.issuperset = function (other) {
         this.sort ();
         for (var i = 0; i < other.length; i++) {
             if (this.__bindexOf__ (other [i]) == -1) {
@@ -942,11 +948,11 @@ __pragma__ ('endif')
         return true;
     };
 
-    Array.prototype.issubset = function (other) {
+    second_list_prototype.issubset = Array.prototype.issubset = function (other) {
         return set (other.slice ()) .issuperset (this); // Sort copy of 'other', not 'other' itself, since it may be an ordered sequence
     };
 
-    Array.prototype.union = function (other) {
+    second_list_prototype.union = Array.prototype.union = function (other) {
         var result = set (this.slice () .sort ());
         for (var i = 0; i < other.length; i++) {
             if (result.__bindexOf__ (other [i]) == -1) {
@@ -956,7 +962,7 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.intersection = function (other) {
+    second_list_prototype.intersection = Array.prototype.intersection = function (other) {
         this.sort ();
         var result = set ();
         for (var i = 0; i < other.length; i++) {
@@ -967,7 +973,7 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.difference = function (other) {
+    second_list_prototype.difference = Array.prototype.difference = function (other) {
         var sother = set (other.slice () .sort ());
         var result = set ();
         for (var i = 0; i < this.length; i++) {
@@ -978,11 +984,11 @@ __pragma__ ('endif')
         return result;
     };
 
-    Array.prototype.symmetric_difference = function (other) {
+    second_list_prototype.symmetric_difference = Array.prototype.symmetric_difference = function (other) {
         return this.union (other) .difference (this.intersection (other));
     };
 
-    Array.prototype.py_update = function () {   // O (n)
+    second_list_prototype.py_update = Array.prototype.py_update = function () {   // O (n)
         var updated = [] .concat.apply (this.slice (), arguments) .sort ();
         this.clear ();
         for (var i = 0; i < updated.length; i++) {
@@ -992,7 +998,7 @@ __pragma__ ('endif')
         }
     };
 
-    Array.prototype.__eq__ = function (other) { // Also used for list
+    second_list_prototype.__eq__ = Array.prototype.__eq__ = function (other) { // Also used for list
         if (this.length != other.length) {
             return false;
         }
@@ -1008,23 +1014,23 @@ __pragma__ ('endif')
         return true;
     };
 
-    Array.prototype.__ne__ = function (other) { // Also used for list
+    second_list_prototype.__ne__ = Array.prototype.__ne__ = function (other) { // Also used for list
         return !this.__eq__ (other);
     };
 
-    Array.prototype.__le__ = function (other) {
+    second_list_prototype.__le__ = Array.prototype.__le__ = function (other) {
         return this.issubset (other);
     };
 
-    Array.prototype.__ge__ = function (other) {
+    second_list_prototype.__ge__ = Array.prototype.__ge__ = function (other) {
         return this.issuperset (other);
     };
 
-    Array.prototype.__lt__ = function (other) {
+    second_list_prototype.__lt__ = Array.prototype.__lt__ = function (other) {
         return this.issubset (other) && !this.issuperset (other);
     };
 
-    Array.prototype.__gt__ = function (other) {
+    second_list_prototype.__gt__ = Array.prototype.__gt__ = function (other) {
         return this.issuperset (other) && !this.issubset (other);
     };
 
