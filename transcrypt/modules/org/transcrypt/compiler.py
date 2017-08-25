@@ -2450,23 +2450,12 @@ class Generator (ast.NodeVisitor):
                 self.all.add ('__doc__')
                 self.docStringEmitted = True
 
-        if self.use:
-            self.use = sorted (self.use)
-            self.emit ('__pragma__ (\'<use>\' +\n') # Only the last occurence of <use> and </use> are special.
-            self.indent ()
-            for name in self.use:
-                self.emit ('\'{}\' +\n', name)
-            self.dedent ()
-            self.emit ('\'</use>\')\n')
-
         if self.all:
             self.all = sorted (self.all)
-            self.emit ('__pragma__ (\'<all>\')\n')  # Only the last occurence of <all> and </all> are special.
             self.indent ()
             for name in self.all:
                 self.emit ('__all__.{0} = {0};\n', self.filterId (name))
             self.dedent ()
-            self.emit ('__pragma__ (\'</all>\')\n')
 
         self.dedent ()
 
