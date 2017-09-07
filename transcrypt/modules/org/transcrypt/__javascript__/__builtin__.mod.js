@@ -662,47 +662,70 @@ __pragma__ ('endif')
 
     // Repr function uses __repr__ method, then __str__, then toString
     var repr = function (anObject) {
-        if (anObject == null) {
-            return 'None';
-        } else if (anObject.__repr__) {
+        if (anObject === null) {
+            return "None";
+        }
+
+        switch (typeof anObject) {
+            case "undefined":
+                return 'None';
+            case "boolean":
+                if (anObject) {
+                    return "True"
+                } else {
+                    return "False";
+                }
+            case "number":
+            case "string":
+            case "symbol":
+                return String (anObject);
+            case "function":
+                try {
+                    return String (anObject);
+                } catch (e) {
+                    return "<function " + anObject.name + ">"
+                }
+            case "object":
+            default:
+                break;
+        }
+
+        if (anObject.__repr__) {
             return anObject.__repr__ ();
         } else if (anObject.__str__) {
             return anObject.__str__ ();
-        }
-            else { // anObject has no __repr__ and no __str__
+        } else {
+            // anObject has no __repr__ and no __str__
+            if (anObject.constructor === Object) {
                 try {
-                    if (anObject.constructor == Object) {
-                        var result = '{';
-                        var comma = false;
-                        for (var attrib in anObject) {
-                            if (!__specialattrib__ (attrib)) {
-                                if (attrib.isnumeric ()) {
-                                    var attribRepr = attrib;                // If key can be interpreted as numerical, we make it numerical
-                                }                                           // So we accept that '1' is misrepresented as 1
-                                else {
-                                    var attribRepr = '\'' + attrib + '\'';  // Alpha key in dict
-                                }
+                    var resultList = [
+                        '{'
+                    ];
+                    var comma = false;
+                    for (var attrib in anObject) {
+                        if (anObject.hasOwnProperty (attrib) && !__specialattrib__ (attrib)) {
 
-                                if (comma) {
-                                    result += ', ';
-                                }
-                                else {
-                                    comma = true;
-                                }
-                                result += attribRepr + ': ' + repr (anObject [attrib]);
+                            if (comma) {
+                                resultList.push (', ');
                             }
+                            else {
+                                comma = true;
+                            }
+
+                            resultList.push ("'", attrib, "': " + repr (anObject[attrib]));
                         }
-                        result += '}';
-                        return result;
                     }
-                    else {
-                        return typeof anObject == 'boolean' ? anObject.toString () .capitalize () : anObject.toString ();
-                    }
+                    resultList.push ('}');
+                    return resultList.join ();
                 }
                 catch (exception) {
                     return '<object of type: ' + typeof anObject + '>';
                 }
             }
+            else {
+                return String (anObject);
+            }
+        }
     };
     __all__.repr = repr;
 
@@ -1423,20 +1446,12 @@ __pragma__ ('endif')
     // String extensions
 
     function str (stringable) {
-        if (typeof stringable === 'number')
-            return stringable.toString();
-        else {
-            try {
-                return stringable.__str__ ();
-            }
-            catch (exception) {
-                try {
-                    return repr (stringable);
-                }
-                catch (exception) {
-                    return String (stringable); // No new, so no permanent String object but a primitive in a temporary 'just in time' wrapper
-                }
-            }
+        if (stringable === null || typeof stringable === 'undefined') {
+            return 'None';
+        } else if (stringable.__str__) {
+            return stringable.__str__ ();
+        } else {
+            return repr (stringable);
         }
     };
     __all__.str = str;
