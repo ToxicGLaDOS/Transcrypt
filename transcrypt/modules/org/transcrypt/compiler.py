@@ -592,7 +592,6 @@ class Generator (ast.NodeVisitor):
         self.scopes = []
         self.use = set ()
         self.all = set ()
-        self.importHeads = set ()
         self.docString = None
         self.docStringEmitted = False
         self.expectingNonOverloadedLhsIndex = False
@@ -2555,10 +2554,21 @@ class Generator (ast.NodeVisitor):
             else:
                 aliasSplit = alias.name.split ('.', 1)
                 head = aliasSplit [0]
-                tail = aliasSplit [1] if len (aliasSplit) > 1 else ''
+                tail = aliasSplit [1] if len (aliasSplit) > 1 else None
 
-                self.importHeads.add (head)
-                self.emit ('__nest__ ({}, \'{}\', __init__ (__world__.{}))', self.filterId (head), self.filterId (tail), self.filterId (alias.name))
+                def recursive_obj_creation(remaining_parts, end_inner, *end_inner_args):
+                    if remaining_parts is None:
+                        self.emit(end_inner, *end_inner_args)
+                    else:
+                        parts_split = remaining_parts.split('.', 1)
+                        next_ident = parts_split[0]
+                        remaining = parts_split[1] if len(parts_split) > 1 else None
+                        self.emit("{{'{}': ", self.filterId(next_ident))
+                        recursive_obj_creation(remaining, end_inner, *end_inner_args)
+                        self.emit("}}")
+
+                self.emit('var {} = ', self.filterId(head))
+                recursive_obj_creation(tail, '__init__ (__world__.{})', self.filterId(alias.name))
 
             if index < len (names) - 1:
                 self.emit (';\n')
@@ -2748,9 +2758,6 @@ class Generator (ast.NodeVisitor):
             self.emit ('__inited__: false,\n')
             self.emit ('__init__: function (__all__) {{\n')
             self.indent ()
-
-        importHeadsIndex = len (self.targetFragments)
-        importHeadsLevel = self.indentLevel
         
         if not '__cunit__'  in self.module.program.symbols:
             self.emit ('var __name__ = \'{}\';\n', self.module.metadata.getStandardName ())
@@ -2808,10 +2815,6 @@ class Generator (ast.NodeVisitor):
             self.emit (');\n')
             self.dedent ()
 
-        self.targetFragments.insert (importHeadsIndex, ''.join ([
-            '{}var {} = {{}};{}\n'.format (self.tabs (importHeadsLevel), self.filterId (head), self.lineNrString)
-            for head in sorted (self.importHeads)
-        ]))
         self.descope ()
 
     def visit_Name (self, node):
