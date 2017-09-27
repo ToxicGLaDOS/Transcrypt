@@ -721,6 +721,13 @@ class Generator (ast.NodeVisitor):
         self.allowJavaScriptMod = utils.commandArgs.jsmod
         self.allowMemoizeCalls = utils.commandArgs.fcall
 
+        if utils.commandArgs.noalias:
+            for name in (name for name_list in utils.commandArgs.noalias
+                         for name in name_list.split (',')):
+                for index in reversed (range (len (self.aliasers))):
+                    if self.aliasers [index] [0] == name:
+                        self.aliasers.pop (index)
+
         self.noskipCodeGeneration = True
         self.conditionalCodeGeneration = True
         self.stripTuple = False     # For speed, tuples are translated to bare JavaScript arrays if they're just indices. Will autoreset.
