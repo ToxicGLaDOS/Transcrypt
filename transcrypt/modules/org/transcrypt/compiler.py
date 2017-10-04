@@ -548,7 +548,6 @@ class Generator (ast.NodeVisitor):
         self.skippedTemps = set ()
         self.stubsNames = [
             'org.{}.stubs.'.format (__base__.__envir__.transpiler_name),
-            'typing'
         ]
 
         self.nameConsts = {
