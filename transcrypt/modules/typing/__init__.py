@@ -4,9 +4,6 @@ class Any:
     def __init__ (self):
         pass
 
-class Callable:
-    def __init__ (self):
-        pass
 
 def ClassVar (arg):
     return arg
@@ -15,11 +12,19 @@ class Generic:
     def __init__ (self):
         pass
 
-class Optional:
+    @classmethod
+    def __getitem__(cls):
+        return cls
+
+class Callable(Generic):
     def __init__ (self):
         pass
 
-class Tuple:
+class Optional(Generic):
+    def __init__ (self):
+        pass
+
+class Tuple(Generic):
     def __init__ (self):
         pass
 
@@ -31,7 +36,7 @@ class TypeVar:
     def __init__ (self):
         pass
 
-class Union:
+class Union(Generic):
     def __init__ (self):
         pass
 
@@ -43,7 +48,7 @@ class GenericMeta:
     def __init__ (self):
         pass
 
-class ByteString:
+class ByteString(Generic):
     def __init__ (self):
         pass
 
@@ -63,39 +68,39 @@ class ItemsView:
     def __init__ (self):
         pass
 
-class Iterable:
+class Iterable(Generic):
     def __init__ (self):
         pass
 
-class Iterator:
+class Iterator(Generic):
     def __init__ (self):
         pass
 
-class KeysView:
+class KeysView(Generic):
     def __init__ (self):
         pass
 
-class Mapping:
+class Mapping(Generic):
     def __init__ (self):
         pass
 
-class MappingView:
+class MappingView(Generic):
     def __init__ (self):
         pass
 
-class MutableMapping:
+class MutableMapping(Generic):
     def __init__ (self):
         pass
 
-class MutableSequence:
+class MutableSequence(Generic):
     def __init__ (self):
         pass
 
-class MutableSet:
+class MutableSet(Generic):
     def __init__ (self):
         pass
 
-class Sequence:
+class Sequence(Generic):
     def __init__ (self):
         pass
 
@@ -135,39 +140,39 @@ class SupportsRound:
     def __init__ (self):
         pass
 
-class Counter:
+class Counter(Generic):
     def __init__ (self):
         pass
 
-class Deque:
+class Deque(Generic):
     def __init__ (self):
         pass
 
-class Dict:
+class Dict(Generic):
     def __init__ (self):
         pass
 
-class DefaultDict:
+class DefaultDict(Generic):
     def __init__ (self):
         pass
 
-class List:
+class List(Generic):
     def __init__ (self):
         pass
 
-class Set:
+class Set(Generic):
     def __init__ (self):
         pass
 
-class FrozenSet:
+class FrozenSet(Generic):
     def __init__ (self):
         pass
 
-class NamedTuple:
+class NamedTuple(Generic):
     def __init__ (self):
         pass
 
-class Generator:
+class Generator(Generic):
     def __init__ (self):
         pass
 
