@@ -28,7 +28,7 @@ fi
 test_directory () {
 	cd "$1"
 	echo "testing `pwd`"
-	$exe -r "./autotest.py"
+	$exe -r "./autotest"
 	$exe -bn "./autotest.py"
     # on a CI container we may:
 	killall python
