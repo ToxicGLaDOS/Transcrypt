@@ -248,36 +248,16 @@ class __Terminal__:
     Since we've no way to find out when that is, a timeout is used.
     '''
 
-    def __init__ (self):
-        self.buffer = ''
-    
-        try:
-            self.element = document.getElementById ('__terminal__')
-        except:
-            self.element = None
-            
-        if self.element:
-            self.element.style.overflowX = 'auto'
-            self.element.style.boxSizing = 'border-box'
-            self.element.style.padding = '5px'
-            self.element.innerHTML = '_'
-        
     #__pragma__ ('kwargs')
         
-    def print (self, *args, sep = ' ', end = '\n'):
-        self.buffer = '{}{}{}'.format (self.buffer, sep.join ([str (arg) for arg in args]), end) [-4096 : ] 
-        
-        if self.element:
-            self.element.innerHTML = self.buffer.replace ('\n', '<br>') .replace (' ', '&nbsp')
-            self.element.scrollTop = self.element.scrollHeight
+    def print (self, *args, sep = ' '):
+        length = len(args)
+        if length < 1:
+            console.log ()
+        elif length == 1:
+            console.log (args[0])
         else:
-            console.log (sep.join ([str (arg) for arg in args]))
-        
-    def input (self, question):
-        self.print ('{}'.format (question), end = '')
-        answer = window.prompt ('\n'.join (self.buffer.split ('\n') [-8:]))
-        self.print (answer)
-        return answer
+            console.log(sep.join ([str(arg) for arg in args]))
         
     #__pragma__ ('nokwargs')
     
