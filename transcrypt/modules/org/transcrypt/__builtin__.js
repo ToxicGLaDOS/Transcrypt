@@ -610,49 +610,44 @@ export function callable (anObject) {
 
 // Repr function uses __repr__ method, then __str__, then toString
 export function repr (anObject) {
-    try {
+    if (anObject == null) {
+        return 'None';
+    } else if (anObject.__repr__) {
         return anObject.__repr__ ();
-    }
-    catch (exception) {
+    } else if (anObject.__str__) {
+        return anObject.__str__ ();
+    } else { // anObject has no __repr__ and no __str__
         try {
-            return anObject.__str__ ();
-        }
-        catch (exception) { // anObject has no __repr__ and no __str__
-            try {
-                if (anObject == null) {
-                    return 'None';
-                }
-                else if (anObject.constructor == Object) {
-                    var result = '{';
-                    var comma = false;
-                    for (var attrib in anObject) {
-                        if (!__specialattrib__ (attrib)) {
-                            if (attrib.isnumeric ()) {
-                                var attribRepr = attrib;                // If key can be interpreted as numerical, we make it numerical
-                            }                                           // So we accept that '1' is misrepresented as 1
-                            else {
-                                var attribRepr = '\'' + attrib + '\'';  // Alpha key in dict
-                            }
-
-                            if (comma) {
-                                result += ', ';
-                            }
-                            else {
-                                comma = true;
-                            }
-                            result += attribRepr + ': ' + repr (anObject [attrib]);
+            if (anObject.constructor == Object) {
+                var result = '{';
+                var comma = false;
+                for (var attrib in anObject) {
+                    if (!__specialattrib__ (attrib)) {
+                        if (attrib.isnumeric ()) {
+                            var attribRepr = attrib;                // If key can be interpreted as numerical, we make it numerical
+                        }                                           // So we accept that '1' is misrepresented as 1
+                        else {
+                            var attribRepr = '\'' + attrib + '\'';  // Alpha key in dict
                         }
+
+                        if (comma) {
+                            result += ', ';
+                        }
+                        else {
+                            comma = true;
+                        }
+                        result += attribRepr + ': ' + repr (anObject [attrib]);
                     }
-                    result += '}';
-                    return result;
                 }
-                else {
-                    return typeof anObject == 'boolean' ? anObject.toString () .capitalize () : anObject.toString ();
-                }
+                result += '}';
+                return result;
             }
-            catch (exception) {
-                return '<object of type: ' + typeof anObject + '>';
+            else {
+                return typeof anObject == 'boolean' ? anObject.toString () .capitalize () : anObject.toString ();
             }
+        }
+        catch (exception) {
+            return '<object of type: ' + typeof anObject + '>';
         }
     }
 };
