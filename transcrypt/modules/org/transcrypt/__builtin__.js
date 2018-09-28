@@ -1385,20 +1385,12 @@ Uint8Array.prototype.__rmul__ = Uint8Array.prototype.__mul__;
 // String extensions
 
 export function str (stringable) {
-    if (typeof stringable === 'number')
-        return stringable.toString();
-    else {
-        try {
-            return stringable.__str__ ();
-        }
-        catch (exception) {
-            try {
-                return repr (stringable);
-            }
-            catch (exception) {
-                return String (stringable); // No new, so no permanent String object but a primitive in a temporary 'just in time' wrapper
-            }
-        }
+    if (stringable === null || typeof stringable === 'undefined') {
+        return 'None';
+    } else if (stringable.__str__) {
+        return stringable.__str__ ();
+    } else {
+        return repr (stringable);
     }
 };
 
