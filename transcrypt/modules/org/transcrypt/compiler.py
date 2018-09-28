@@ -952,7 +952,7 @@ class Generator (ast.NodeVisitor):
             if node.vararg:
                 # Slice starts at end of formal positional params, ends with last actual param, all actual keyword args are taken out into the kwarg transfer object
                 self.emit (
-                    'var {} = tuple ([].slice.apply (arguments).slice ({}, {} + 1));\n',
+                    'var {} = [].slice.apply (arguments).slice ({}, {} + 1);\n',
                     self.filterId (node.vararg.arg),
                     len (node.args),
                     self.getTemp ('ilastarg')
@@ -965,13 +965,13 @@ class Generator (ast.NodeVisitor):
             self.emit ('else {{\n')
             self.indent ()
             if node.vararg:     # if there's a formal vararg param, even if there isn't an actual one
-                self.emit ('var {} = tuple ();\n', self.filterId (node.vararg.arg))
+                self.emit ('var {} = [];\n', self.filterId (node.vararg.arg))
             self.dedent ()
             self.emit ('}}\n')
         else:
             if node.vararg: # See above
                 self.emit (
-                    'var {} = tuple ([].slice.apply (arguments).slice ({}));\n',
+                    'var {} = [].slice.apply (arguments).slice ({});\n',
                     self.filterId (node.vararg.arg),
                     len (node.args),
                 )
@@ -3111,7 +3111,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         self.visit_ListComp (node, isSet = True)
 
     def visit_Slice (self, node):   # Only visited for dims as part of ExtSlice
-        self.emit ('tuple ([')
+        self.emit ('[')
 
         if node.lower == None:
             self.emit ('0')
@@ -3132,7 +3132,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         else:
             self.visit (node.step)
 
-        self.emit ('])')
+        self.emit (']')
 
     def visit_Str (self, node):
         self.emit ('{}', repr (node.s)) # Use repr (node.s) as second, rather than first parameter, since node.s may contain {}
@@ -3273,8 +3273,6 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         keepTuple = not (self.stripTuple or self.stripTuples)       # Tuples used as indices are stripped for speed
         self.stripTuple = False             # Tuples used as indices are stripped for speed, only strip first tuple encountered
                                             # Tuples used as assignment target in a JavaScript 6 for-loop are stripped for correctness, not only first
-        if keepTuple:
-            self.emit ('tuple (')
 
         self.emit ('[')
         for index, elt in enumerate (node.elts):
@@ -3282,9 +3280,6 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
             self.visit (elt)
 
         self.emit (']')
-
-        if keepTuple:
-            self.emit (')')
 
     def visit_UnaryOp (self, node):
         if self.allowOperatorOverloading and type (node.op) == ast.USub:
