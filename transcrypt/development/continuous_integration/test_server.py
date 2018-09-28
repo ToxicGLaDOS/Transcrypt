@@ -66,9 +66,7 @@ _ = os.path.abspath(__file__).rsplit
 # /root/Transcrypt/transcrypt:
 env['d_0'] = d0 = _('/', 3)[0]
         
-runners = {'3.5': 'run_transcrypt35',
-           '3.6': 'run_transcrypt36',
-           '3.7': 'run_transcrypt37'}
+runners = {'3.7': 'run_transcrypt'}
 
 avail_pyvers = []
 for maj in '3.5', '3.6', '3.7':
