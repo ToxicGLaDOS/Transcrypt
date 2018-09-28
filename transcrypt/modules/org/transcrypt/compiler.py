@@ -1017,6 +1017,7 @@ class Generator (ast.NodeVisitor):
                     emitPathIndices ()
                     self.emit (')')
                 else:
+                    export = False
                     if type (target) == ast.Name:
                         if type (self.getScope () .node) == ast.ClassDef and target.id != self.getTemp ('left'):
                             self.emit ('{}.'.format ('.'.join ([scope.node.name for scope in self.getAdjacentClassScopes ()]))) # The target is a class attribute
@@ -1025,12 +1026,14 @@ class Generator (ast.NodeVisitor):
                         else:
                             if type (self.getScope () .node) == ast.Module: # Redundant but regular
                                 if hasattr (node, 'parentNode') and type (node.parentNode) == ast.Module and not target.id in self.allOwnNames:
-                                    self.emit ('export ')                        
+                                    export = True
                             self.emit ('var ')
                     self.visit (target)
                     self.emit (' = ')
                     self.visit (value)
                     emitPathIndices ()
+                    if export:
+                        self.emit (';module.exports.{0} = {0};'.format (self.filterId (target.id)))
 
         # Tuple assignment LHS tree walker
         # The target (LHS) guides the walk, so it determines the source indices
@@ -1723,9 +1726,10 @@ class Generator (ast.NodeVisitor):
 
     def visit_ClassDef (self, node):
         self.adaptLineNrString (node)
+        export = False
 
         if type (self.getScope () .node) == ast.Module:
-            self.emit ('export var {} = '.format (self.filterId (node.name)))
+            self.emit ('var {} = '.format (self.filterId (node.name)))
             self.allOwnNames.add (node.name)
         elif type (self.getScope () .node) == ast.ClassDef:
             self.emit ('\n{}:'.format (self.filterId (node.name)))
@@ -2174,6 +2178,9 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
             emitProperties ()
             emitMerges ()
                         
+        if export:
+            self.emit (';module.exports.{0} = {0}'.format (self.filterId(node.name)))
+                        
     def visit_Compare (self, node):
         if len (node.comparators) > 1:
             self.emit ('(')
@@ -2460,6 +2467,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         self.visit_FunctionDef (node, anAsync = True)
     
     def visit_FunctionDef (self, node, anAsync = False):
+        export = False
         def emitScopedBody ():
             self.inscope (node)
             self.emitBody (node.body)
@@ -2494,10 +2502,10 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
             isStaticMethod = False
             isProperty = False
             getter = '__get__'
+            export = False
 
             if node.decorator_list:
                 for decorator in node.decorator_list:
-                    decoratorNode = decorator
                     decoratorType = type (decoratorNode)
                     nameCheck = ''
                     while decoratorType != ast.Name:
@@ -2550,7 +2558,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
                         self.emit ('get {} () {{return {} (this, ', self.filterId (nodeName), getter)
                 elif isGlobal:
                     if type (node.parentNode) == ast.Module and not nodeName in self.allOwnNames:
-                        self.emit ('export ')                        
+                        export = True
                     self.emit ('var {} = ', self.filterId (nodeName))
                 else:
                     self.emit ('var {} = ', self.filterId (nodeName))
@@ -2583,7 +2591,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
                             self.emit ('get {} () {{return {} (this, {}function', self.filterId (nodeName), getter, 'async ' if anAsync else '')
                 elif isGlobal:
                     if type (node.parentNode) == ast.Module and not nodeName in self.allOwnNames:
-                        self.emit ('export ')                        
+                        export = True
                     self.emit ('var {} = {}function', self.filterId (nodeName), 'async ' if anAsync else '')
                 else:
                     self.emit ('var {} = {}function', self.filterId (nodeName), 'async ' if anAsync else '')
@@ -2644,6 +2652,9 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
 
             if isGlobal:
                 self.allOwnNames.add (nodeName)
+
+        if export:
+            self.emit (';module.exports.{0} = {0};'.format (self.filterId(nodeName)))
 
     def visit_GeneratorExp (self, node):
         # Currently generator expressions are just iterators on lists.
@@ -2737,13 +2748,13 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
                 # Clashes with own names or already imported names are avoided
                 
                 self.allImportedNames.add (alias.asname)
-                self.emit ('import * as {} from \'{}\';\n', self.filterId (alias.asname), module.importRelPath)
+                self.emit ('var {} = require(\'{}\');\n', self.filterId (alias.asname), module.name)
             else:
                 # Import dotted name, requires import under constructed unique name and then nesting,
                 # including transfer of imported names from immutable module to mutable object
                 # This mutable module representation object tmay come to hold other mutable module represention objects
             
-                self.emit ('import * as __module_{}__ from \'{}\';\n', self.filterId (module.name) .replace ('.', '_'), module.importRelPath)
+                self.emit ('var __module_{}__ = require(\'{}\');\n', self.filterId (module.name) .replace ('.', '_'), module.name)
                 aliasSplit = alias.name.split ('.', 1)
                 head = aliasSplit [0]
                 tail = aliasSplit [1] if len (aliasSplit) > 1 else ''
@@ -2796,14 +2807,14 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
                 else:
                     try:                                                        # Try if alias.name denotes a module
                         module = self.useModule ('{}.{}'.format (node.module, alias.name))
-                        self.emit ('import * as {} from \'{}\';\n', self.filterId (alias.asname) if alias.asname else self.filterId (alias.name), module.importRelPath)
+                        self.emit ('var {} = require(\'{}\');\n', self.filterId (alias.asname) if alias.asname else self.filterId (alias.name), module.name)
                     except:                                                     # If it doesn't it denotes a facility inside a module
                         module = self.useModule (node.module)
                         namePairs.append (utils.Any (name = alias.name, asName = alias.asname))      
             if namePairs:
                 try:
                     # Still, when here, the 'decimated' import list become empty in rare cases, but JavaScript should swallow that
-                    self.emit ('import {{')
+                    self.emit ('var {{')
                     for index, namePair in enumerate (sorted (namePairs, key = lambda namePair: namePair.asName if namePair.asName else namePair.name)):
                         if not (namePair.asName if namePair.asName else namePair.name) in (self.allOwnNames | self.allImportedNames):
                             self.emitComma (index)
@@ -2813,7 +2824,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
                                 self.allImportedNames.add (namePair.asName)
                             else:
                                 self.allImportedNames.add (namePair.name)
-                    self.emit ('}} from \'{}\';\n', module.importRelPath)
+                    self.emit ('}} = require(\'{}\');\n', module.name)
                 except:
                     print (traceback.format_exc ())
                     
@@ -3012,7 +3023,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
             # Avoid double declarations since imports are immutable (hoisted)
             importedNames = ', '.join (sorted ([export for export in runtimeModule.exports if not export in (self.allOwnNames | self.allImportedNames)]))
             
-            self.emit ('import {{{}}} from \'{}\';\n', importedNames, runtimeModule.importRelPath)
+            self.emit ('var {{{}}} = require(\'{}\');\n', importedNames, runtimeModule.name)
             
         # Emit empty import head objects, each as the leftmost part of the dotted name that can be used to access the imported module
         # Note that the required importheads are only known after importing modules, but must be inserted in the target code before that,

@@ -293,6 +293,10 @@ def digestJavascript (code, symbols, mayStripComments, mayRemoveAnnotations):
                 
                 result.exportedNames.append (words [2])
                    
+        if words [0].startswith('module.exports.'):
+            # trim off ';'. trust we wrote it in predictable format because this is temporary code...
+            result.exportedNames.append(words[2][:-1])
+
         if words [0] == 'import':
             # Deducing imported modules from JavaScript is needed to provide the right modules to JavaScript-only modules
             # They may have an explicit import list for unqualified access or an import * for qualified access

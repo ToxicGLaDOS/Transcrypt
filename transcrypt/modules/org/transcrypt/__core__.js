@@ -61,7 +61,7 @@ The task of the __nest__ function is to start at the head object and then walk t
 creating the ones that do not exist already, and insert the necessary module reference attributes into them.   
 */
 
-export function __nest__ (headObject, tailNames, value) {    
+function __nest__ (headObject, tailNames, value) {
     var current = headObject;
     // In some cases this will be <main function>.__all__,
     // which is the main module and is also known under the synonym <main function.__world__.
@@ -96,24 +96,27 @@ export function __nest__ (headObject, tailNames, value) {
         });
     }
 };
+module.exports.__nest__ = __nest__;
 
 // Initialize module if not yet done and return its globals
-export function __init__ (module) {
+function __init__ (module) {
     if (!module.__inited__) {
         module.__all__.__init__ (module.__all__);
         module.__inited__ = true;
     }
     return module.__all__;
 };
+module.exports.__init__ = __init__;
 
 // Proxy switch, controlled by __pragma__ ('proxy') and __pragma ('noproxy')
-export var __proxy__ = false;  // No use assigning it to __all__, only its transient state is important
+var __proxy__ = false;  // No use assigning it to __all__, only its transient state is important
+module.exports.__proxy__ = __proxy__;
 
 // Since we want to assign functions, a = b.f should make b.f produce a bound function
 // So __get__ should be called by a property rather then a function
 // Factory __get__ creates one of three curried functions for func
 // Which one is produced depends on what's to the left of the dot of the corresponding JavaScript property
-export function __get__ (self, func, quotedFuncName) {
+function __get__ (self, func, quotedFuncName) {
     if (self) {
         if (self.hasOwnProperty ('__class__') || typeof self == 'string' || self instanceof String) {           // Object before the dot
             if (quotedFuncName) {                                   // Memoize call since fcall is on, by installing bound function in instance
@@ -140,8 +143,9 @@ export function __get__ (self, func, quotedFuncName) {
         return func;                                                // Return free function
     }
 };
+module.exports.__get__ = __get__;
 
-export function __getcm__ (self, func, quotedFuncName) {
+function __getcm__ (self, func, quotedFuncName) {
     if (self.hasOwnProperty ('__class__')) {
         return function () {
             var args = [] .slice.apply (arguments);
@@ -155,13 +159,15 @@ export function __getcm__ (self, func, quotedFuncName) {
         };
     }
 };
+module.exports.__getcm__ = __getcm__;
 
-export function __getsm__ (self, func, quotedFuncName) {
+function __getsm__ (self, func, quotedFuncName) {
     return func;
 };
+module.exports.__getsm__ = __getsm__;
     
 // Mother of all metaclasses        
-export var py_metatype = {
+var py_metatype = {
     __name__: 'type',
     __bases__: [],
     
@@ -208,10 +214,11 @@ export var py_metatype = {
         return cls;
     }
 };
+module.exports.py_metatype = py_metatype;
 py_metatype.__metaclass__ = py_metatype;
 
 // Mother of all classes
-export var object = {
+var object = {
     __init__: function (self) {},
     
     __metaclass__: py_metatype, // By default, all classes have metaclass type, since they derive from object
@@ -255,15 +262,18 @@ export var object = {
         return instance;
     }   
 };
+module.exports.object = object;
 
 // Class creator facade function, calls class creation worker
-export function __class__ (name, bases, attribs, meta) {         // Parameter meta is optional
+function __class__ (name, bases, attribs, meta) {         // Parameter meta is optional
     if (meta === undefined) {
         meta = bases [0] .__metaclass__;
     }
             
     return meta.__new__ (meta, name, bases, attribs);
 };
+module.exports.__class__ = __class__;
 
 // Define __pragma__ to preserve '<all>' and '</all>', since it's never generated as a function, must be done early, so here
-export function __pragma__ () {};
+function __pragma__ () {};
+module.exports.__pragma__ = __pragma__;
