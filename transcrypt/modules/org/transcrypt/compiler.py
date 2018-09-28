@@ -898,7 +898,7 @@ class Generator (ast.NodeVisitor):
             # If there is a **kwargs arg, make a local to hold its calltime contents
             # This local is needed even if arguments.length == 0, it's just empty then but may be read or passed on
             if node.kwarg:
-                self.emit ('var {} = dict ();\n', self.filterId (node.kwarg.arg))
+                self.emit ('var {} = {{}};\n', self.filterId (node.kwarg.arg))
 
             self.emit ('if (arguments.length) {{\n')
             self.indent ()
@@ -2239,21 +2239,20 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         if not self.allowJavaScriptKeys:                    # If we don't want JavaScript treatment of keys, for literal keys it doesn't make a difference
             for key in node.keys:
                 if not type (key) in (ast.Str, ast.Num):    # but if there's only one non-literal key there's a difference, and all keys are treated the Python way
-                    self.emit ('dict ([')
+                    self.emit ('{{')
                     for index, (key, value) in enumerate (zip (node.keys, node.values)):
                         self.emitComma (index)
                         self.emit ('[')
                         self.visit (key)                    # In a JavaScript list, name is evaluated as variable or function call to produce a key
-                        self.emit (', ')
+                        self.emit (']: ')
                         self.visit (value)
-                        self.emit (']')
-                    self.emit ('])')
+                    self.emit ('}}')
                     return
 
         if self.allowJavaScriptIter:
             self.emit ('{{')
         else:
-            self.emit ('dict ({{')                              # Since we didn't return, we want identifier keys to be treated as string literals
+            self.emit ('{{')                              # Since we didn't return, we want identifier keys to be treated as string literals
         for index, (key, value) in enumerate (zip (node.keys, node.values)):
             self.emitComma (index)
             self.idFiltering = False                        # The key may be a string or an identifier, the latter normally would be filtered, which we don't want
@@ -2265,7 +2264,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         if self.allowJavaScriptIter:
             self.emit ('}}')
         else:
-            self.emit ('}})')
+            self.emit ('}}')
 
     def visit_DictComp (self, node):
         self.visit_ListComp (node, isDict = True)
@@ -2986,13 +2985,13 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         '''
         if self.allowGlobals:
             self.emit (
-                'export var __all__ = dict ({{' # Has nothing to do with emitting an export list, just another importable (so exported) module level variable __all__
+                'export var __all__ = {{' # Has nothing to do with emitting an export list, just another importable (so exported) module level variable __all__
                 +
                 ', '.join ([
                     f'get {name} () {{{{return {name};}}}}, set {name} (value) {{{{{name} = value;}}}}' for name in sorted (self.allOwnNames)
                 ])
                 +
-                '}});\n'            
+                '}};\n'
             )
            
         # Import other modules (generatable only late, but hoisted) and nest them into the import heads
