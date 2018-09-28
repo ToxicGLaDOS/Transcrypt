@@ -625,7 +625,32 @@ export function callable (anObject) {
 export function repr (anObject) {
     if (anObject == null) {
         return 'None';
-    } else if (anObject.__repr__) {
+    }
+    switch (typeof anObject) {
+        case "undefined":
+            return 'None';
+        case "boolean":
+            if (anObject) {
+                return "True"
+            } else {
+                return "False";
+            }
+        case "number":
+        case "string":
+        case "symbol":
+            return String (anObject);
+        case "function":
+            try {
+                return String (anObject);
+            } catch (e) {
+                return "<function " + anObject.name + ">"
+            }
+        case "object":
+        default:
+            break;
+    }
+
+    if (anObject.__repr__) {
         return anObject.__repr__ ();
     } else if (anObject.__str__) {
         return anObject.__str__ ();
@@ -656,7 +681,7 @@ export function repr (anObject) {
                 return result;
             }
             else {
-                return typeof anObject == 'boolean' ? anObject.toString () .capitalize () : anObject.toString ();
+                return String(anObject);
             }
         }
         catch (exception) {
