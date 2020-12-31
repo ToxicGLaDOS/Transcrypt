@@ -1696,6 +1696,9 @@ class Generator (ast.NodeVisitor):
                 self.visit (node.args [0])
                 self.emit ('--')
                 return
+            elif node.func.id == 'cast':
+                self.visit (node.args [1])
+                return
 
         # conjugate () call, for complex numbers, will generate __conj__ () call to runtime
         elif (
@@ -2791,6 +2794,39 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
         # )
 
     def visit_If (self, node):
+        class Unknown(Exception):
+            pass
+
+        class ConstEvalVisitor (ast.NodeVisitor):
+            def __init__ (self):
+                self.values = []
+
+            def visit_UnaryOp (self, node):
+                self.visit (node.operand)
+                if node.op == ast.Not:
+                    self.values [-1] = not self.values [-1]
+
+            def visit_Expr (self, node):
+                self.visit (node.value)
+
+            def visit_Name (self, node):
+                if node.id == 'TYPE_CHECKING':
+                    self.values.append (False)
+                else:
+                    raise Unknown ()
+
+        test_evaluator = ConstEvalVisitor ()
+        try:
+            test_evaluator.visit (node.test)
+        except Unknown:
+            pass
+        else:
+            if len (test_evaluator.values) == 1:
+                if test_evaluator.values [0]:
+                    # skip the `if` if we know it to be compile-time true.
+                    self.emitBody (node.body)
+                return
+
         self.adaptLineNrString (node)
 
         self.emit ('if (')
