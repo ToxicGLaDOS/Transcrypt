@@ -2368,16 +2368,7 @@ return list (selfFields).''' + comparatorName + '''(list (otherFields));
             if index:
                 self.emit (' && ')
 
-            if type (op) in (ast.In, ast.NotIn):
-                if type (op) == ast.In:
-                    self.emit ('(')
-                else:
-                    self.emit ('!(')
-                self.visitSubExpr (node, left)
-                self.emit (' in ')
-                self.visitSubExpr (node, right)
-                self.emit (')')
-            elif (self.allowOperatorOverloading and type (op) in (
+            if type (op) in (ast.In, ast.NotIn) or (self.allowOperatorOverloading and type (op) in (
                 ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE
             )):
                 self.emit ('{} ('.format (self.filterId (
