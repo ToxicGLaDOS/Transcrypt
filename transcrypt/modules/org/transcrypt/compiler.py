@@ -890,6 +890,14 @@ class Generator (ast.NodeVisitor):
             self.emit (', ')
             self.visit (value)
             self.emit (')')
+        else:
+            # Indexing by a constant or value
+            self.visit (target.value)
+            self.emit('[')
+            self.visit (target.slice)
+            self.emit(']')
+            self.emit(' = ')
+            self.visit (value)
 
     def nextTemp (self, name):
         if name in self.tempIndices:
